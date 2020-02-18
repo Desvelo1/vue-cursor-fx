@@ -10,8 +10,11 @@
         <div
             v-show="! hideOutside"
             class="cursor-fx__inner cursor-fx__inner__outside"
-            :style="outsideSizes"
-        />
+        >
+            <div
+                class="cursor-fx__inner cursor-fx__inner__outside__oval"
+            />
+        </div>
         <div
             v-show="( !! $slots.default || !! $scopedSlots.default ) || forceCustomSlot"
             class="cursor-fx__inner cursor-fx__inner__custom"
@@ -50,11 +53,7 @@
             },
             color: {
                 type: String,
-                default: '#333333',
-            },
-            colorHover: {
-                type: String,
-                default: '#333333',
+                default: '#000000',
             },
             outsideSize: {
                 type: String,
@@ -96,6 +95,7 @@
             {
                 touch: false,
                 hover: false,
+                dragging: false,
                 loaded: false,
             }
         ),
@@ -104,6 +104,7 @@
 
                 return {
                     'cursor-fx--hover': this.hover,
+                    'cursor-fx--dragging': this.dragging,
                     'cursor-fx--touch': this.touch,
                     'cursor-fx--loaded': this.loaded,
                     [ `cursor-fx--shape-${ this.shape }` ]: this.shape,
@@ -111,13 +112,10 @@
 
             },
             cssVars() {
-
                 return {
                     '--color': this.color,
-                    '--color-hover': this.colorHover,
                     'mix-blend-mode': this.mixBlendMode,
                 };
-
             },
             // Sizes
             outsideSizes() {
@@ -212,6 +210,63 @@
 
                     [
                         ... document.querySelectorAll(
+                            '[data-cursor-snap]',
+                        ),
+                    ].forEach(
+                        link => {
+
+                            link.removeEventListener(
+                                'mouseenter',
+                                () => this.$cursor.snap(),
+                                false,
+                            );
+                            link.removeEventListener(
+                                'mouseleave',
+                                () => this.$cursor.release(),
+                                false,
+                            );
+                            link.removeEventListener(
+                                'click',
+                                () => this.$cursor.click(),
+                                false,
+                            );
+
+                        },
+                    );
+
+                    [
+                        ... document.querySelectorAll(
+                            '[data-cursor-drag]',
+                        ),
+                    ].forEach(
+                        link => {
+
+                            link.removeEventListener(
+                                'mousedown',
+                                () => this.$cursor.dragStart(),
+                                false,
+                            );
+                            document.removeEventListener(
+                                'mouseup',
+                                () => this.$cursor.dragEnd(),
+                                false,
+                            );
+                            link.removeEventListener(
+                                'mouseenter',
+                                () => this.$cursor.dragEnter(),
+                                false,
+                            );
+                            link.removeEventListener(
+                                'mouseleave',
+                                () => this.$cursor.dragLeave(),
+                                false,
+                            );
+
+                        },
+                    );
+
+                    [
+                        ... document.querySelectorAll(
                             '[data-cursor-hidden]',
                         ),
                     ].forEach(
@@ -246,6 +301,27 @@
                             link.removeEventListener(
                                 'mouseleave',
                                 () => this.$cursor.mixBlendMode(),
+                                false,
+                            );
+
+                        },
+                    );
+
+                    [
+                        ... document.querySelectorAll(
+                            '[data-cursor-color]',
+                        ),
+                    ].forEach(
+                        link => {
+
+                            link.removeEventListener(
+                                'mouseenter',
+                                () => this.$cursor.color(),
+                                false,
+                            );
+                            link.removeEventListener(
+                                'mouseleave',
+                                () => this.$cursor.color(),
                                 false,
                             );
 
@@ -300,6 +376,94 @@
 
                 [
                     ... document.querySelectorAll(
+                        '[data-cursor-snap]',
+                    ),
+                ].forEach(
+                    link => {
+
+                        link.addEventListener(
+                            'mouseenter',
+                            () => {
+
+                                this.$cursor.snap(link);
+                                this.hover = true;
+
+                            },
+                            false,
+                        );
+                        link.addEventListener(
+                            'mouseleave',
+                            () => {
+
+                                this.$cursor.release(link);
+                                this.hover = false;
+
+                            },
+                            false,
+                        );
+                        link.addEventListener(
+                            'click',
+                            () => this.$cursor.click(),
+                            false,
+                        );
+
+                    },
+                );
+
+                [
+                    ... document.querySelectorAll(
+                        '[data-cursor-drag]',
+                    ),
+                ].forEach(
+                    link => {
+
+                        link.addEventListener(
+                            'mousedown',
+                            () => {
+
+                                this.$cursor.dragStart(link);
+                                this.dragging = true;
+
+                            },
+                            false,
+                        );
+                        document.addEventListener(
+                            'mouseup',
+                            () => {
+
+                                this.$cursor.dragEnd(link);
+                                this.dragging = false;
+
+                            },
+                            false,
+                        );
+
+                        link.addEventListener(
+                            'mouseenter',
+                            () => {
+
+                                this.$cursor.dragEnter(link);
+                                this.hover = true;
+
+                            },
+                            false,
+                        );
+                        link.addEventListener(
+                            'mouseleave',
+                            () => {
+
+                                this.$cursor.dragLeave(link);
+                                this.hover = false;
+
+                            },
+                            false,
+                        );
+
+                    },
+                );
+
+                [
+                    ... document.querySelectorAll(
                         '[data-cursor-hidden]',
                     ),
                 ].forEach(
@@ -329,13 +493,36 @@
                         link.addEventListener(
                             'mouseenter',
                             el => this.$cursor.mixBlendMode(
-                                el.target.dataset.cursorMixBlendMode, 
+                                el.target.dataset.cursorMixBlendMode,
                             ),
                             false,
                         );
                         link.addEventListener(
                             'mouseleave',
                             () => this.$cursor.mixBlendMode(),
+                            false,
+                        );
+
+                    },
+                );
+
+                [
+                    ... document.querySelectorAll(
+                        '[data-cursor-color]',
+                    ),
+                ].forEach(
+                    link => {
+
+                        link.addEventListener(
+                            'mouseenter',
+                            el => this.$cursor.color(
+                                el.target.dataset.cursorColor,
+                            ),
+                            false,
+                        );
+                        link.addEventListener(
+                            'mouseleave',
+                            () => this.$cursor.color(),
                             false,
                         );
 

@@ -1,5 +1,6 @@
-const SCALE_MIN = 0.5
-    , SCALE_MAX = 1
+const SIZE_DEFAULT = 32
+    , SIZE_HOVER = 50
+    , BORDER_WIDTH = 2
     , lerp = (
         a,
         b,
@@ -54,12 +55,14 @@ export default class CursorFx {
                     circle: 0.18,
                     custom: 0.23,
                 },
-                scale: {
-                    ratio: 0.18,
-                    min: SCALE_MIN,
-                    max: SCALE_MAX,
+                size: {
+                    ratio: 0.05,
+                    default: SIZE_DEFAULT,
+                    hover: SIZE_HOVER,
                 },
+                borderWidth: BORDER_WIDTH,
                 opacity: 0.1,
+                customColor: null,
                 ... options,
             },
         );
@@ -70,14 +73,21 @@ export default class CursorFx {
         this.DOM.circle = this.DOM.el.querySelector(
             `${ base_class }__inner__outside`,
         );
+        this.DOM.oval = this.DOM.el.querySelector(
+            `${ base_class }__inner__outside__oval`,
+        );
         this.DOM.custom = this.DOM.el.querySelector(
             `${ base_class }__inner__custom`,
         );
+
+        this.dragging = false
 
         this.bounds = {
             dot: this.DOM.dot ? this.DOM.dot.getBoundingClientRect() : null,
             circle: this.DOM.circle ? this.DOM.circle.getBoundingClientRect() : null,
             custom: this.DOM.custom ? this.DOM.custom.getBoundingClientRect() : null,
+            snap: this.DOM.snap ? this.DOM.snap.getBoundingClientRect() : null,
+            dragger: this.DOM.snap ? this.DOM.snap.getBoundingClientRect() : null
         };
 
         if( this.bounds.dot && ! this.bounds.dot.width ) {
@@ -173,8 +183,8 @@ export default class CursorFx {
 
         }
 
-        this.scale = this.$options.scale.min;
-        this.lastScale = this.$options.scale.max;
+        this.size = this.$options.size.default;
+        this.lastSize = this.$options.size.hover;
         this.opacity = this.$options.opacity;
         this.lastOpacity = 1;
 
@@ -210,6 +220,8 @@ export default class CursorFx {
         };
 
         this.initEvents();
+
+        this.DOM.snap = null;
 
         requestAnimationFrame(
             () => this.render(),
@@ -258,13 +270,13 @@ export default class CursorFx {
                 circle,
                 custom,
             },
-            scale: { ratio },
+            size: { ratio },
             opacity,
         } = this.$options;
 
-        this.lastScale = lerp(
-            this.lastScale,
-            this.scale,
+        this.lastSize = lerp(
+            this.lastSize,
+            this.size,
             ratio,
         );
         this.lastOpacity = lerp(
@@ -273,16 +285,16 @@ export default class CursorFx {
             opacity,
         );
 
-        if( this.bounds.dot ) {
+        if( this.bounds.dot && !this.dragging ) {
 
             this.lastMousePos.dot.x = lerp(
                 this.lastMousePos.dot.x,
-                this.mousePos.x - ( this.bounds.dot.width / 2 ),
+                this.mousePos.x - ( this.bounds.dot.width / 4 ),
                 dot,
             );
             this.lastMousePos.dot.y = lerp(
                 this.lastMousePos.dot.y,
-                this.mousePos.y - ( this.bounds.dot.height / 2 ),
+                this.mousePos.y - ( this.bounds.dot.height / 4 ),
                 dot,
             );
 
@@ -291,23 +303,84 @@ export default class CursorFx {
         }
 
         if( this.bounds.circle ) {
+            if (this.DOM.snap) {
 
-            this.lastMousePos.circle.x = lerp(
-                this.lastMousePos.circle.x,
-                this.mousePos.x - ( this.bounds.circle.width / 2 ),
-                circle,
-            );
-            this.lastMousePos.circle.y = lerp(
-                this.lastMousePos.circle.y,
-                this.mousePos.y - ( this.bounds.circle.height / 2 ),
-                circle,
-            );
+                this.bounds.snap = this.DOM.snap.getBoundingClientRect();
+                this.bounds.circle = this.DOM.circle.getBoundingClientRect();
 
-            this.DOM.circle.style.transform = `translateX(${ ( this.lastMousePos.circle.x ) }px) translateY(${ this.lastMousePos.circle.y }px) scale(${ this.lastScale })`;
+                this.DOM.oval.style.width = `${this.bounds.snap.width}px`;
+                this.DOM.oval.style.height = `${this.bounds.snap.width}px`;
 
+                this.lastMousePos.circle.x = lerp(
+                    this.lastMousePos.circle.x,
+                    this.bounds.snap.x - ( this.bounds.circle.width / 2 ) + ( this.bounds.snap.width / 2 ),
+                    circle,
+                );
+                this.lastMousePos.circle.y = lerp(
+                    this.lastMousePos.circle.y,
+                    this.bounds.snap.y - ( this.bounds.circle.height / 2 ) + ( this.bounds.snap.height / 2 ),
+                    circle,
+                );
+
+            } else if (this.DOM.dragger) {
+
+                this.bounds.dragger = this.DOM.dragger.getBoundingClientRect();
+                this.bounds.circle = this.DOM.circle.getBoundingClientRect();
+
+                this.DOM.oval.style.width = `${this.bounds.dragger.width * 0.65}px`;
+                this.DOM.oval.style.height = `${this.bounds.dragger.width * 0.65}px`;
+
+                this.lastMousePos.circle.x = lerp(
+                    this.lastMousePos.circle.x,
+                    this.bounds.dragger.x - ( this.bounds.circle.width / 2 ) + ( this.bounds.dragger.width / 2 ),
+                    circle,
+                );
+                this.lastMousePos.circle.y = lerp(
+                    this.lastMousePos.circle.y,
+                    this.bounds.dragger.y - ( this.bounds.circle.height / 2 ) + ( this.bounds.dragger.height / 2 ),
+                    circle,
+                );
+
+                if (this.dragging) {
+                    if( this.bounds.dot ) {
+                        this.lastMousePos.dot.x = lerp(
+                            this.lastMousePos.dot.x,
+                            this.bounds.dragger.x + (this.bounds.dragger.width * 0.5) - ( this.bounds.dot.width / 2 ),
+                            1,
+                        );
+                        this.lastMousePos.dot.y = lerp(
+                            this.lastMousePos.dot.y,
+                            this.bounds.dragger.y + (this.bounds.dragger.height * 0.5) - ( this.bounds.dot.height / 2 ),
+                            1,
+                        );
+
+                        this.DOM.dot.style.transform = `translateX(${ ( this.lastMousePos.dot.x ) }px) translateY(${ this.lastMousePos.dot.y }px)`;
+                    }
+                }
+
+            } else {
+
+                this.DOM.oval.style.width = `${this.size}px`;
+                this.DOM.oval.style.height = `${this.size}px`;
+
+                this.bounds.circle = this.DOM.circle.getBoundingClientRect();
+
+                this.lastMousePos.circle.x = lerp(
+                    this.lastMousePos.circle.x,
+                    this.mousePos.x - ( this.bounds.circle.width / 2 ) + ( this.$options.borderWidth / 2 ),
+                    circle,
+                );
+                this.lastMousePos.circle.y = lerp(
+                    this.lastMousePos.circle.y,
+                    this.mousePos.y - ( this.bounds.circle.height / 2 ) + ( this.$options.borderWidth / 2 ),
+                    circle,
+                );
+
+            }
+            this.DOM.circle.style.transform = `translateX(${ ( this.lastMousePos.circle.x ) }px) translateY(${ this.lastMousePos.circle.y }px)`;
         }
 
-        if( this.bounds.custom ) {
+        if( this.bounds.custom) {
 
             this.lastMousePos.custom.x = lerp(
                 this.lastMousePos.custom.x,
@@ -320,34 +393,86 @@ export default class CursorFx {
                 custom,
             );
 
-            this.DOM.custom.style.transform = `translateX(${ ( this.lastMousePos.custom.x ) }px) translateY(${ this.lastMousePos.custom.y }px) scale(${ this.lastScale })`;
+            this.DOM.custom.style.transform = `translateX(${ ( this.lastMousePos.custom.x ) }px) translateY(${ this.lastMousePos.custom.y }px)`;
 
         }
 
     }
 
     enter(
-        scale = this.$options.scale.max,
+        size = this.$options.size.hover,
     ) {
 
-        this.scale = scale;
+        this.size = size;
 
     }
 
     leave(
-        scale = this.$options.scale.min,
+        size = this.$options.size.default,
     ) {
 
-        this.scale = scale;
+        this.size = size;
+
+    }
+
+    snap(
+        link
+    ) {
+
+        this.DOM.snap = link;
+
+    }
+
+    release(
+        link
+    ) {
+
+        this.DOM.snap = null;
+
+    }
+
+    dragStart (
+        link
+    ) {
+
+        this.DOM.dragger = link
+        this.dragging = true
+        this.DOM.circle.style.opacity = `0`
+
+    }
+
+    dragEnd (
+        link
+    ) {
+
+        this.DOM.dragger = null
+        this.dragging = false
+        this.DOM.circle.style.opacity = `1`
+
+    }
+
+    dragEnter (
+        link
+    ) {
+
+        this.DOM.dragger = link
+
+    }
+
+    dragLeave (
+        link
+    ) {
+
+        this.DOM.dragger = null
 
     }
 
     click(
-        scale = this.$options.scale.min,
+        size = this.$options.size.hover,
         opacity = 0,
     ) {
 
-        this.lastScale = scale;
+        this.lastSize = size;
         this.lastOpacity = opacity;
 
     }
@@ -370,5 +495,12 @@ export default class CursorFx {
 
         this.DOM.el.style.mixBlendMode = value;
 
+    }
+
+    color(
+        value = this.$options.customColor,
+    ) {
+        this.DOM.oval.style.borderColor = value
+        this.DOM.dot.style.backgroundColor = value
     }
 }
