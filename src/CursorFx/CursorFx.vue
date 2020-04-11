@@ -16,6 +16,12 @@
             />
         </div>
         <div
+            class="cursor-fx__inner cursor-fx__inner__horizontal"
+        >
+            <div class="cursor-fx__inner__horizontal__arrow cursor-fx__inner__horizontal__arrow--left" v-html="require('./arrow-left.svg?include')" />
+            <div class="cursor-fx__inner__horizontal__arrow cursor-fx__inner__horizontal__arrow--right" v-html="require('./arrow-right.svg?include')" />
+        </div>
+        <div
             v-show="( !! $slots.default || !! $scopedSlots.default ) || forceCustomSlot"
             class="cursor-fx__inner cursor-fx__inner__custom"
             :style="outsideSizes"
@@ -95,6 +101,8 @@
             {
                 touch: false,
                 hover: false,
+                horizontal: false,
+                horizontalDragging: false,
                 dragging: false,
                 loaded: false,
             }
@@ -105,6 +113,8 @@
                 return {
                     'cursor-fx--hover': this.hover,
                     'cursor-fx--dragging': this.dragging,
+                    'cursor-fx--horizontal': this.horizontal,
+                    'cursor-fx--horizontal-dargging': this.horizontalDragging,
                     'cursor-fx--touch': this.touch,
                     'cursor-fx--loaded': this.loaded,
                     [ `cursor-fx--shape-${ this.shape }` ]: this.shape,
@@ -112,10 +122,12 @@
 
             },
             cssVars() {
+
                 return {
                     '--color': this.color,
                     'mix-blend-mode': this.mixBlendMode,
                 };
+
             },
             // Sizes
             outsideSizes() {
@@ -267,6 +279,37 @@
 
                     [
                         ... document.querySelectorAll(
+                            '[data-cursor-horizontal]',
+                        ),
+                    ].forEach(
+                        link => {
+
+                            link.removeEventListener(
+                                'mousedown',
+                                () => this.$cursor.horizontalDragStart(),
+                                true,
+                            );
+                            document.removeEventListener(
+                                'mouseup',
+                                () => this.$cursor.horizontalDragEnd(),
+                                true,
+                            );
+                            link.removeEventListener(
+                                'mouseenter',
+                                () => this.$cursor.horizontalEnter(),
+                                false,
+                            );
+                            link.removeEventListener(
+                                'mouseleave',
+                                () => this.$cursor.horizontalLeave(),
+                                false,
+                            );
+
+                        },
+                    );
+
+                    [
+                        ... document.querySelectorAll(
                             '[data-cursor-hidden]',
                         ),
                     ].forEach(
@@ -385,7 +428,9 @@
                             'mouseenter',
                             () => {
 
-                                this.$cursor.snap(link);
+                                this.$cursor.snap(
+                                    link
+                                );
                                 this.hover = true;
 
                             },
@@ -395,7 +440,9 @@
                             'mouseleave',
                             () => {
 
-                                this.$cursor.release(link);
+                                this.$cursor.release(
+                                    link
+                                );
                                 this.hover = false;
 
                             },
@@ -421,7 +468,9 @@
                             'mousedown',
                             () => {
 
-                                this.$cursor.dragStart(link);
+                                this.$cursor.dragStart(
+                                    link
+                                );
                                 this.dragging = true;
 
                             },
@@ -431,7 +480,9 @@
                             'mouseup',
                             () => {
 
-                                this.$cursor.dragEnd(link);
+                                this.$cursor.dragEnd(
+                                    link
+                                );
                                 this.dragging = false;
 
                             },
@@ -442,7 +493,9 @@
                             'mouseenter',
                             () => {
 
-                                this.$cursor.dragEnter(link);
+                                this.$cursor.dragEnter(
+                                    link
+                                );
                                 this.hover = true;
 
                             },
@@ -452,8 +505,61 @@
                             'mouseleave',
                             () => {
 
-                                this.$cursor.dragLeave(link);
+                                this.$cursor.dragLeave(
+                                    link
+                                );
                                 this.hover = false;
+
+                            },
+                            false,
+                        );
+
+                    },
+                );
+
+                [
+                    ... document.querySelectorAll(
+                        '[data-cursor-horizontal]',
+                    ),
+                ].forEach(
+                    link => {
+
+                        link.addEventListener(
+                            'mousedown',
+                            () => {
+
+                                this.$cursor.horizontalDragStart();
+                                this.horizontalDragging = true;
+
+                            },
+                            false,
+                        );
+                        link.addEventListener(
+                            'mouseup',
+                            () => {
+
+                                this.$cursor.horizontalDragEnd();
+                                this.horizontalDragging = false;
+
+                            },
+                            false,
+                        );
+                        link.addEventListener(
+                            'mouseenter',
+                            () => {
+
+                                this.$cursor.horizontalEnter();
+                                this.horizontal = true;
+
+                            },
+                            false,
+                        );
+                        link.addEventListener(
+                            'mouseleave',
+                            () => {
+
+                                this.$cursor.horizontalLeave();
+                                this.horizontal = false;
 
                             },
                             false,
@@ -550,6 +656,11 @@
                 this.$emit(
                     'ready',
                     this.$cursor,
+                );
+
+                this.$on(
+                    'init-events',
+                    this.initEvents,
                 );
 
                 document.documentElement.classList.add(

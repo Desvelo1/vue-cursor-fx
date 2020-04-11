@@ -12,7 +12,7 @@ $background-color: #fff;
 
     width: 100%;
 
-    min-height: 100vh;
+    min-@include fullheight;
     color: #{$color};
     color: var( --color, #{$color} );
     background-color: #{$background-color};

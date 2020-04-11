@@ -81,6 +81,7 @@
         "stylelint-no-unsupported-browser-features": "^4.0.0",
         "stylelint-order": "^4.0.0",
         "vue-markdown-loader": "^2.4.1",
+        "vue-svg-loader": "^0.16.0",
         "vue-template-compiler": "^2.6.11"
     },
     "license": "MIT",

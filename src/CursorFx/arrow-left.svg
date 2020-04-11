@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="7px" height="10px" viewBox="0 0 7 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 64 (93537) - https://sketch.com -->
+    <title>arrow-left</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Coursor-/-Swipe-/-Dark" transform="translate(-12.000000, -20.000000)" fill="#000000" fill-rule="nonzero">
+            <g id="Group-3" transform="translate(12.000000, 20.000000)">
+                <path d="M-0.707106781,2.29289322 C-0.34662282,1.93240926 0.220608236,1.90467972 0.612899443,2.20970461 L0.707106781,2.29289322 L3.863,5.449 L7.02049739,2.29289322 C7.38098135,1.93240926 7.9482124,1.90467972 8.34050361,2.20970461 L8.43471095,2.29289322 C8.79519491,2.65337718 8.82292444,3.22060824 8.51789955,3.61289944 L8.43471095,3.70710678 L3.86380208,8.27801565 L-0.707106781,3.70710678 C-1.09763107,3.31658249 -1.09763107,2.68341751 -0.707106781,2.29289322 Z" id="arrow-left" transform="translate(3.863802, 5.139008) scale(1, -1) rotate(-270.000000) translate(-3.863802, -5.139008) "></path>
+            </g>
+        </g>
+    </g>
+</svg>
