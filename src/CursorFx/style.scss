@@ -52,12 +52,12 @@
             height: 32px;
             visibility: hidden;
             opacity: 0;
-            fill: currentColor;
 
             &__arrow {
 
                 margin: 0 8px;
                 transition: transform .5s $easeOutExpo;
+                fill: currentColor;
 
 
                 &--left {
